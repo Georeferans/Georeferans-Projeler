@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+  <meta charset="UTF-8">
+  <title>Georeferans</title>
+  
+
+</head>
+<body>
+<!-- partial:index.partial.html -->
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Georeferans Çalışmaları - Düzenlenmiş Başlıklar ve Raporlar</title>
+  <style>
+    body, html {
+      margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #1e3c72, #2a5298);
+      color: #f0f0f0;
+      display: flex; flex-direction: column;
+    }
+    header {
+      padding: 20px 30px;
+      background: rgba(0,0,0,0.4);
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    }
+    header h1 {
+      margin: 0 0 8px 0;
+      font-weight: 700;
+      font-size: 2rem;
+      letter-spacing: 1.2px;
+    }
+    header p {
+      margin: 0;
+      font-size: 1.1rem;
+      font-style: italic;
+      color: #cfd8dc;
+    }
+    main {
+      flex: 1;
+      padding: 15px 30px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      background: #222;
+    }
+    select {
+      font-size: 1.1rem;
+      padding: 10px 14px;
+      border-radius: 6px;
+      border: none;
+      max-width: 600px;
+      outline: none;
+      cursor: pointer;
+      margin: 0 auto;
+      display: block;
+    }
+    .viewer-container {
+      flex: 1;
+      display: flex;
+      gap: 20px;
+      height: calc(100vh - 160px);
+    }
+    iframe {
+      flex: 1;
+      border: none;
+      border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+      background: white;
+      height: 100%;
+    }
+    .no-report {
+      flex: 1;
+      background: #333;
+      border-radius: 8px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 1.2rem;
+      color: #bbb;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+      height: 100%;
+      padding: 10px;
+      text-align: center;
+    }
+    @media (max-width: 900px) {
+      main {
+        padding: 10px 15px;
+      }
+      select {
+        max-width: 100%;
+        font-size: 1rem;
+        padding: 8px 12px;
+      }
+      .viewer-container {
+        flex-direction: column;
+        height: auto;
+        gap: 12px;
+      }
+      iframe, .no-report {
+        height: 50vh;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      }
+    }
+    @media (max-width: 400px) {
+      header h1 {
+        font-size: 1.5rem;
+      }
+      header p {
+        font-size: 0.9rem;
+      }
+      select {
+        font-size: 0.9rem;
+        padding: 6px 10px;
+      }
+      iframe, .no-report {
+        height: 40vh;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Georeferans Çalışmaları</h1>
+    <p>Hazırlayan: Muhammed Enes Sevgi</p>
+  </header>
+  <main>
+    <select id="mapSelect" aria-label="Harita Seçimi"></select>
+    <div class="viewer-container">
+      <iframe id="mapIframe" title="Harita PDF Görüntüleyici" src=""></iframe>
+      <div id="reportContainer"></div>
+    </div>
+  </main>
+  <script>
+    // Yardımcı fonksiyon: Başlığı Title Case yapar
+    function toTitleCase(str) {
+      return str.toLowerCase().split(' ').map(word => {
+        if(word.length === 0) return '';
+        return word[0].toUpperCase() + word.slice(1);
+      }).join(' ');
+    }
+
+    // Güncellenmiş veri listesi
+    const rawMaps = [
+      { title: "Frigya Haritası", mapPdf: "https://drive.google.com/file/d/1kRI3hImTgWWBzKaF7JIq5TenLgHMXYoS/preview", reportPdf: "https://drive.google.com/file/d/1x9bIrUTbESgYT3mcuIYG4uIWJL6ogwvB/preview", year: -700 },
+      { title: "998 Endülüs Haritası - 2", mapPdf: "https://drive.google.com/file/d/1oXrjr9MwEno8czk_H5YcNXgMvqQAx6jq/preview", reportPdf: "https://drive.google.com/file/d/1HEMnoV38k_VCfaHme9dOPpsz9e-6T0is/preview", year: 900 },
+      { title: "998 Endülüs Haritası - 1", mapPdf: "https://drive.google.com/file/d/1VugPkrNySCJicEOiWS84T3jZQZgsvjMJ/preview", reportPdf: "https://drive.google.com/file/d/1HEMnoV38k_VCfaHme9dOPpsz9e-6T0is/preview", year: 950 },
+      { title: "Büyük İskender Seferleri", mapPdf: "https://drive.google.com/file/d/1PxMWRkvwIKbEsgbkd9WGziF8w3Hd1LtL/preview", reportPdf: null, year: -330 },
+      { title: "Asur İmparatorluğu", mapPdf: "https://drive.google.com/file/d/1CWPfJv0a2vxrFhynphdNn4HYZ4smHAHB/preview", reportPdf: "https://drive.google.com/file/d/1x9bIrUTbESgYT3mcuIYG4uIWJL6ogwvB/preview", year: -700 },
+      { title: "Asur İmparatorluğu - 2", mapPdf: "https://drive.google.com/file/d/1FQOEFCiSS26Yu-P7A6zZh_F-AGw-OWbA/preview", reportPdf: "https://drive.google.com/file/d/1x9bIrUTbESgYT3mcuIYG4uIWJL6ogwvB/preview", year: -700 },
+      { title: "1875 Osmanlı Haritası", mapPdf: "https://drive.google.com/file/d/1zIdLN8ipv1QRhgsvM3-ehwmv5_a1weSO/preview", reportPdf: "https://drive.google.com/file/d/1BA-9MzW-gTUJjlXWgMc80fr9KIiLunLy/preview", year: 1875 },
+      { title: "1875 Osmanlı Haritası - 2", mapPdf: "https://drive.google.com/file/d/1j7DcS9BBa5Ng2DlXYqngHeXHRZV7xAhy/preview", reportPdf: "https://drive.google.com/file/d/1BA-9MzW-gTUJjlXWgMc80fr9KIiLunLy/preview", year: 1875 },
+      { title: "1593 Osmanlı Haritası", mapPdf: "https://drive.google.com/file/d/1d6Oj5sb7XHykzNRIzVbUXvb3Gfy5kGAr/preview", reportPdf: "https://drive.google.com/file/d/1Thr-4jP5mgHHVd7Usv1iu3wCWNjAfQQ_/preview", year: 1593 },
+      { title: "1593 Osmanlı Haritası - 2", mapPdf: "https://drive.google.com/file/d/1MsSDB8ldBH1zKbbTmJpNX8HRQeaqmtFj/preview", reportPdf: "https://drive.google.com/file/d/1Thr-4jP5mgHHVd7Usv1iu3wCWNjAfQQ_/preview", year: 1593 },
+      { title: "1350 Osmanlı Haritası", mapPdf: "https://drive.google.com/file/d/1ApCGtge_91EUp5NQ0qp92Mc7KD7Sby8w/preview", reportPdf: null, year: 1350 },
+      { title: "849 Abbasi Haritası", mapPdf: "https://drive.google.com/file/d/15J09f8JWluinWL7seUIQyDui71QoOYyN/preview", reportPdf: "https://drive.google.com/file/d/1BzTmPhsHb1jTC5werDFx7FRT6TdYUblF/preview", year: 849 },
+      { title: "849 Abbasi Haritası - 2", mapPdf: "https://drive.google.com/file/d/19x1bZn1alJHC6PBlRwTBkdCrN88eouPN/preview", reportPdf: "https://drive.google.com/file/d/1BzTmPhsHb1jTC5werDFx7FRT6TdYUblF/preview", year: 849 }
+    ];
+
+    // Başlıkları Title Case yap ve aynı isimlerin sonuna "-2", "-3" ekle
+    const titleCount = {};
+    const maps = rawMaps.map(item => {
+      let title = toTitleCase(item.title);
+      if(titleCount[title]) {
+        titleCount[title]++;
+        title += ` -${titleCount[title]}`;
+      } else {
+        titleCount[title] = 1;
+      }
+      return {
+        title,
+        mapPdf: item.mapPdf,
+        reportPdf: item.reportPdf,
+        year: item.year
+      };
+    });
+
+    // Tarihe göre büyükten küçüğe sırala
+    maps.sort((a,b) => b.year - a.year);
+
+    const mapSelect = document.getElementById('mapSelect');
+    const mapIframe = document.getElementById('mapIframe');
+    const reportContainer = document.getElementById('reportContainer');
+
+    function updateView(index) {
+      const selected = maps[index];
+      if(selected.mapPdf) {
+        mapIframe.style.display = 'block';
+        mapIframe.src = selected.mapPdf;
+      } else {
+        mapIframe.style.display = 'none';
+        mapIframe.src = '';
+      }
+      if(selected.reportPdf) {
+        reportContainer.innerHTML = `<iframe src="${selected.reportPdf}" title="Sonuç Raporu PDF"></iframe>`;
+      } else {
+        reportContainer.innerHTML = `<div class="no-report">Sonuç raporu bulunmamaktadır.</div>`;
+      }
+    }
+
+    // Dropdown seçeneklerini oluştur
+    maps.forEach((map, i) => {
+      const option = document.createElement('option');
+      option.value = i;
+      option.textContent = map.title;
+      mapSelect.appendChild(option);
+    });
+
+    // İlk seçimi ayarla ve göster
+    mapSelect.selectedIndex = 0;
+    updateView(0);
+
+    // Seçim değiştiğinde içeriği güncelle
+    mapSelect.addEventListener('change', (e) => {
+      updateView(e.target.value);
+    });
+  </script>
+</body>
+</html>
+<!-- partial -->
+  
+</body>
+</html>
